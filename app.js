@@ -10,11 +10,12 @@ var cors = require('cors');
 var tasks = require('./routes/tasks');
 var rolls = require('./routes/rolls');
 
+//var User = require('./modules/user');
+
 var app = express();
 
-app.get('/', function(req, res) {
-	res.send('keke');
-});
+//app.use('/tasks', User.init);
+//app.use('/rolls', User.init);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

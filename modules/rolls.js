@@ -28,8 +28,13 @@ exports.addRoll = function(req, res) {
 	DB.db.collection('syncrolls').save(entry, function(err, result) {
 		if (err) return console.log(err);
 		console.log('Created new syncroll ' + roll);
-		this.refresh;
 	});
-}
+	//DB.db.collection('users').update({})
+};
+
+exports.deleteRoll = function(req, res) {
+	var rollid = req.query.rollid;
+	
+};
 
 module.exports = exports;

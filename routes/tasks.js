@@ -2,17 +2,18 @@ var express = require('express');
 var tasks = express.Router();
 
 var Tasks = require('../modules/tasks');
+var IVLE = require('../modules/ivle');
+var User = require('../modules/user');
 
-var apiKey = 'rSe7yZUlJVbjo95tnZs4i';
-var token;
+//var apiKey = 'rSe7yZUlJVbjo95tnZs4i';
 
 /* Tasks page. */
 
 /* Refresh the task list */
-tasks.get('/', Tasks.refresh);
+tasks.get('/', User.requireUserID, Tasks.refresh);
 
 /* Synchronise with IVLE modules */
-tasks.get('/syncIVLE', Tasks.syncIVLE);
+tasks.get('/syncIVLE', IVLE.syncIVLE);
 
 
 /*
