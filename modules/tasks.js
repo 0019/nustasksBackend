@@ -4,9 +4,14 @@ var DB = require('./db');
 
 exports.refresh = function(req, res) {
 	var userid = req.userid;
-	DB.db.collection('users').find({'UserID': userid}, {'syncrolls': 1}).limit(1).then(function(data) {
-		if (!data) res.send('Not existing.');
-		res.send(id);
+	var db = req.db;
+	db.collection('users').find({'UserID': userid}).limit(1).toArray(function(err, result) {
+		if (err) return console.log(err);
+		if (result.length == 0) { // new user
+			//IVLE.newUser();
+		} else {
+			
+		}
 	});
 };
 
