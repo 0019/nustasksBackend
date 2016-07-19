@@ -1,15 +1,30 @@
 var exports;
 var User = require('./user');
+var async = require('async');
 
 exports.refresh = function(req, res, next) {
 	var userid = req.userid;
 	var db = req.db;
-	db.collection('users').find({'UserID': userid}, {'tasks': 1}).limit(1).toArray(function(err, result) {
+	db.collection('users').find({'UserID': userid}, {'syncrolls': 1}).limit(1).toArray(function(err, result) {
 		if (err) return console.log(err);
 		if (result.length == 0) { // new user
 			next();
 		} else {
-			res.send(result);
+			var tasksByRolls = [];
+			var calls = [];
+			result[0].syncrolls.forEach(function(roll) {
+				calls.push(function(callback) {
+					console.log(roll);
+					db.collection('tasks').find({'Syncroll': roll}, {'Title': 1, 'Due': 1}).toArray(function(err, result) {
+						tasksByRolls.push(result);
+						console.log(roll + ' pushed');
+						callback(null, roll);
+					});
+				});
+			});
+			async.parallel(calls, function(err, result) {
+				res.send(tasksByRolls);
+			});
 		}
 	});
 };
@@ -22,7 +37,8 @@ exports.addTask = function(req, res) {
 	
 	var entry = {'Title': title, 'Contents': contents, 'Due': due, 'Syncroll': roll, 'CreatedBy': req.userid};
 	req.db.collection('tasks').save(entry, function(err, result) {
-		res.redirect('/tasks/?token=' + req.token);
+		console.log('Task ' + title + ' added')
+		res.redirect('/tasks/?token=' + req.query.token);
 	});
 };
 

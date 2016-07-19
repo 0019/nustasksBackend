@@ -12,8 +12,11 @@ var User = require('../modules/user');
 /* Refresh the task list */
 tasks.get('/', User.requireUserID, Tasks.refresh, IVLE.syncIVLE);
 
+/* Add Task */
+tasks.get('/addTask', User.requireUserID, Tasks.addTask);
+
 /* Synchronise with IVLE modules */
-tasks.get('/syncIVLE', IVLE.syncIVLE);
+//tasks.get('/syncIVLE', IVLE.syncIVLE);
 
 
 /*
