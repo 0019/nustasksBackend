@@ -5,7 +5,7 @@ var rolls = express.Router();
 /* GET users listing. */
 rolls.get('/', Rolls.refresh);
 
-rolls.get('/getRoll', Rolls.getRoll);
+//rolls.get('/getRoll', Rolls.getRoll);
 
 //rolls.get('/addRoll', Rolls.addRoll);
 
