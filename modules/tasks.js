@@ -31,11 +31,11 @@ exports.refresh = function(req, res, next) {
 
 exports.addTask = function(req, res) {
 	var contents = req.query.contents;
-	var roll = req.query.syncroll;
+	var roll = req.query.rollid;
 	var title = req.query.title;
 	var due = req.query.due;
 	
-	var entry = {'Title': title, 'Contents': contents, 'Due': due, 'Syncroll': roll, 'CreatedBy': req.userid};
+	var entry = {'Title': title, 'Contents': contents, 'Due': due, 'Syncroll': rollid, 'CreatedBy': req.userid};
 	req.db.collection('tasks').save(entry, function(err, result) {
 		console.log('Task ' + title + ' added')
 		res.redirect('/tasks/?token=' + req.query.token);
@@ -56,7 +56,7 @@ exports.updateTask = function(req, res) {
 	var id = req.query.id; // require task id
 	
 	req.db.collection('tasks').update({'_id': id}, {'Title': title, 'Contents': contents, 'Due': due, 'Syncroll': roll, 'UpdatedBy': req.userid}).toArray(function(err, result) {
-		console.log('Task ' + title + ' added')
+		console.log('Task ' + title + ' updated')
 		res.redirect('/tasks/getTask/?id=' + id + 'token=' + req.query.token);
 	});
 };

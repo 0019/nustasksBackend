@@ -1,3 +1,4 @@
+var async = require('async');
 var exports;
 /*
 exports.syncIVLE = function(req, res) {
@@ -12,10 +13,22 @@ exports.refresh = function(req, res) {
 };
 
 exports.getRoll = function(req, res) {
-	console.log('Get roll');
-	DB.db.collection('syncrolls').find({'_id': rollid}).limit(1).toArray(function(err, results) {
-		res.send(results);
+	var calls = [];
+	var ret = [];
+	calls.push(function(callback) {
+		DB.db.collection('syncrolls').find({'_id': rollid}).limit(1).toArray(function(err, results) {
+			ret.push(results);
+			callback();
+		});
+	};
+	calls.push(function(callback) {
+		DB.db.collection('tasks').find({'Syncroll': rollid}, {'Title': 1, 'Due': 1}).toArray(function(err, results) {
+			ret.push(results);
+			res.send(ret);
+			callback();
+		});
 	});
+	async.series(calls);
 };
 
 exports.addRoll = function(req, res) {
