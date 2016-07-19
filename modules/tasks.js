@@ -42,4 +42,23 @@ exports.addTask = function(req, res) {
 	});
 };
 
+exports.getTask = function(req, res) {
+	req.db.collection('tasks').find({'_id': req.query.id}).limit(1).toArray(function(err, result) {
+		res.send(result);
+	});
+};
+
+exports.updateTask = function(req, res) {
+	var contents = req.query.contents;
+	var roll = req.query.syncroll;
+	var title = req.query.title;
+	var due = req.query.due;
+	var id = req.query.id; // require task id
+	
+	req.db.collection('tasks').update({'_id': id}, {'Title': title, 'Contents': contents, 'Due': due, 'Syncroll': roll, 'UpdatedBy': req.userid}).toArray(function(err, result) {
+		console.log('Task ' + title + ' added')
+		res.redirect('/tasks/getTask/?id=' + id + 'token=' + req.query.token);
+	});
+};
+
 module.exports = exports;

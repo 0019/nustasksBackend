@@ -15,6 +15,12 @@ tasks.get('/', User.requireUserID, Tasks.refresh, IVLE.syncIVLE);
 /* Add Task */
 tasks.get('/addTask', User.requireUserID, Tasks.addTask);
 
+/* Get Single Task Detail, task id required */
+tasks.get('/getTask', User.requireUserID, Tasks.getTask);
+
+/* Update Task, task id required */
+tasks.get('/updateTask', User.requireUserID, Tasks.updateTask);
+
 /* Synchronise with IVLE modules */
 //tasks.get('/syncIVLE', IVLE.syncIVLE);
 
