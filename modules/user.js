@@ -11,9 +11,11 @@ exports.requireUserID = function(req, res, next) {
 	var userID_get = 'https://ivle.nus.edu.sg/api/Lapi.svc/UserID_Get?APIKey=' + apiKey + '&Token=' + token;
 	request(userID_get, function(error, response, body) {
 		userid = JSON.parse(body);
-		if (!userid) res.send('Token not verified.'); // need to handle error
-		req.userid = userid;
-		next();
+		if (!userid) res.sendStatus(400); // need to handle error
+		else {
+			req.userid = userid;
+			next();
+		}
 	});
 };
 

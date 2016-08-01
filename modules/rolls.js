@@ -6,21 +6,23 @@ exports.syncIVLE = function(req, res) {
 };
 */
 exports.refresh = function(req, res) {
-	DB.db.collection('users').find({'UserID': req.userid}, {'syncrolls': 1}).limit(1).toArray(function(err, results) {
+	var db = req.db;
+	db.collection('users').find({'UserID': req.userid}, {'syncrolls': 1}).limit(1).toArray(function(err, results) {
 		console.log('Refresh rolls: ' + results);
 		res.send(results);
 	});
 };
 
 exports.getRoll = function(req, res) {
+	var db = req.db;
 	var calls = [];
 	var ret = [];
 	calls.push(function(callback) {
-		DB.db.collection('syncrolls').find({'_id': rollid}).limit(1).toArray(function(err, results) {
+		db.collection('syncrolls').find({'_id': rollid}).limit(1).toArray(function(err, results) {
 			ret.push(results);
 			callback();
 		});
-	};
+	});
 	calls.push(function(callback) {
 		DB.db.collection('tasks').find({'Syncroll': rollid}, {'Title': 1, 'Due': 1}).toArray(function(err, results) {
 			ret.push(results);

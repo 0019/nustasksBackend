@@ -35,7 +35,8 @@ exports.syncIVLE = function(req, res) {
 		var newUser = {'UserID': userid, 
 					   'syncrolls': modules};
 		db.collection('users').save(newUser, function(err, result) {
-			res.redirect('/tasks/?token=' + token);
+			//res.redirect('/tasks/?token=' + token);
+			next();
 		});
 	});
 };

@@ -7,16 +7,14 @@ exports.refresh = function(req, res, next) {
 	var db = req.db;
 	db.collection('users').find({'UserID': userid}, {'syncrolls': 1}).limit(1).toArray(function(err, result) {
 		if (err) return console.log(err);
-		if (result.length == 0) { // new user
-			next();
-		} else {
+		if (result.length != 0) { // not new user
 			var tasksByRolls = [];
 			var calls = [];
 			result[0].syncrolls.forEach(function(roll) {
 				calls.push(function(callback) {
 					console.log(roll);
-					db.collection('tasks').find({'Syncroll': roll}, {'Title': 1, 'Due': 1}).toArray(function(err, result) {
-						tasksByRolls.push(result);
+					db.collection('tasks').find({'Syncroll': roll}, {'Title': 1, 'Due': 1, 'Syncroll': 1}).toArray(function(err, result) {
+						if (result.length > 0) tasksByRolls.push(result);
 						console.log(roll + ' pushed');
 						callback(null, roll);
 					});
@@ -25,20 +23,27 @@ exports.refresh = function(req, res, next) {
 			async.parallel(calls, function(err, result) {
 				res.send(tasksByRolls);
 			});
+		} else {
+			next();
 		}
 	});
 };
 
 exports.addTask = function(req, res) {
-	var contents = req.query.contents;
-	var roll = req.query.rollid;
-	var title = req.query.title;
-	var due = req.query.due;
+	var contents = decodeURI(req.query.contents);
+	var roll = decodeURI(req.query.roll);
+	var title = decodeURI(req.query.title);
+	var duedate = decodeURI(req.query.duedate);
+	var duetime = decodeURI(req.query.duetime);
+		console.log('Title: ' + title);
+		console.log('Roll: ' + roll);
+		console.log('Contents: ' + contents);
+		console.log('Due: ' + duedate + ' ' + duetime);
 	
-	var entry = {'Title': title, 'Contents': contents, 'Due': due, 'Syncroll': rollid, 'CreatedBy': req.userid};
+	var entry = {'Title': title, 'Contents': contents, 'Due': due, 'Syncroll': roll, 'CreatedBy': req.userid};
 	req.db.collection('tasks').save(entry, function(err, result) {
-		console.log('Task ' + title + ' added')
-		res.redirect('/tasks/?token=' + req.query.token);
+		console.log('Task ' + title + ' added.');
+		res.send(JSON.stringify('done'));
 	});
 };
 
