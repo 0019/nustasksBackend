@@ -2,7 +2,7 @@ var exports;
 var request = require('request');
 var apiKey = 'rSe7yZUlJVbjo95tnZs4i';
 
-exports.syncIVLE = function(req, res) {
+exports.syncIVLE = function(req, res, next) {
 	var token = req.query.token;
 	var userid = req.userid;
 	var db = req.db;
@@ -32,8 +32,13 @@ exports.syncIVLE = function(req, res) {
 			}
 		}
 		//adding new user
+		var colors = ['#F06060', '#F3B562', '#F2EBBF', '#8CBEB2', '#5C4B51', '#7F1637', '#047878', '#FFB733', '#F57336', '#C22121'];
+		var modulesAndColors = [];
+		for (var i = 0; i < modules.length; i++) {
+			modulesAndColors.push([modules[i], colors[i%10]]);
+		}
 		var newUser = {'UserID': userid, 
-					   'syncrolls': modules};
+					   'syncrolls': modulesAndColors};
 		db.collection('users').save(newUser, function(err, result) {
 			//res.redirect('/tasks/?token=' + token);
 			next();

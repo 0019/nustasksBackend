@@ -13,8 +13,9 @@ exports.refresh = function(req, res, next) {
 			result[0].syncrolls.forEach(function(roll) {
 				calls.push(function(callback) {
 					console.log(roll);
-					db.collection('tasks').find({'Syncroll': roll}, {'Title': 1, 'Due': 1, 'Syncroll': 1}).toArray(function(err, result) {
-						if (result.length > 0) tasksByRolls.push(result);
+					var color = roll[1];
+					db.collection('tasks').find({'Syncroll': roll[0]}, {'Title': 1, 'Duedate': 1, 'Duetime': 1, 'Syncroll': 1}).toArray(function(err, result) {
+						if (result.length > 0) tasksByRolls.push([result, color]);
 						console.log(roll + ' pushed');
 						callback(null, roll);
 					});
@@ -35,12 +36,12 @@ exports.addTask = function(req, res) {
 	var title = decodeURI(req.query.title);
 	var duedate = decodeURI(req.query.duedate);
 	var duetime = decodeURI(req.query.duetime);
-		console.log('Title: ' + title);
-		console.log('Roll: ' + roll);
-		console.log('Contents: ' + contents);
-		console.log('Due: ' + duedate + ' ' + duetime);
+	console.log('Title: ' + title);
+	console.log('Roll: ' + roll);
+	console.log('Contents: ' + contents);
+	console.log('Due: ' + duedate + ' ' + duetime);
 	
-	var entry = {'Title': title, 'Contents': contents, 'Due': due, 'Syncroll': roll, 'CreatedBy': req.userid};
+	var entry = {'Title': title, 'Contents': contents, 'Duedate': duedate, 'Duetime': duetime, 'Syncroll': roll, 'CreatedBy': req.userid};
 	req.db.collection('tasks').save(entry, function(err, result) {
 		console.log('Task ' + title + ' added.');
 		res.send(JSON.stringify('done'));
