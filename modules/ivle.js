@@ -1,6 +1,10 @@
+var neo4j = require('neo4j-driver').v1;
 var exports;
 var request = require('request');
 var apiKey = 'rSe7yZUlJVbjo95tnZs4i';
+
+var driver = neo4j.driver("bolt://localhost:8888", neo4j.auth.basic("neo4j", "1"));
+var session = driver.session();
 
 exports.syncIVLE = function(req, res, next) {
 	var token = req.query.token;
@@ -12,6 +16,9 @@ exports.syncIVLE = function(req, res, next) {
 		var json = JSON.parse(body);
 		for (var key in json['Results']) {
 			var mod = json['Results'][key]['CourseCode'];
+			
+			session.run( "MERGE (:Module {code:{mod}})", {mod: mod});
+
 			//console.log(modules.indexOf(mod));
 			if (modules.indexOf(mod) < 0) {
 				modules.push(mod);
@@ -31,6 +38,8 @@ exports.syncIVLE = function(req, res, next) {
 				add(mod);
 			}
 		}
+
+
 		//adding new user
 		var colors = ['#F06060', '#F3B562', '#F2EBBF', '#8CBEB2', '#5C4B51', '#7F1637', '#047878', '#FFB733', '#F57336', '#C22121'];
 		var modulesAndColors = [];
