@@ -3,14 +3,40 @@ var User = require('./user');
 var async = require('async');
 
 var neo4j = require('neo4j-driver').v1;
-var driver = neo4j.driver("bolt://localhost", neo4j.auth.basic("neo4j", "neo4j"));
+var driver = neo4j.driver("bolt://0.0.0.0:8888", neo4j.auth.basic("neo4j", "1"));
 
 exports.refresh = function(req, res, next) {
 	var userid = req.userid;
 	var db = req.db;
 	var session = driver.session();
-	session.run( "CREATE (a:Person {name:'Arthur', title:'King'})" );
-
+	session
+		//.run( "MATCH (a:Student {userID:{id}} return a.name,a.userID)",{id:userid})
+		.run( "MATCH (a:Module) return a.code, a.id")
+		.then(function(result) {
+			if (result.length == 1) {
+				
+			} else if (result.length == 0)
+				next();
+			} else {
+				console.log("Number of students with the same id: " + result.length);
+				// error handling
+			}
+		});
+		/*
+    	.then(function (result) {
+		    var records = [];
+			    for (i = 0; i < result.records.length; i++) {
+					      records.push(result.records[i]);
+						      }
+							      return records;
+								    })
+	  	.then(function (records) {
+			if (records.length == 0)
+				session.run('CREATE (a.Module {code:"uiui"})');
+			else 
+				session.run('CREATE (a.Module {code:"else"})');
+	});
+		*/
 	/*
 	db.collection('users').find({'UserID': userid}, {'syncrolls': 1}).limit(1).toArray(function(err, result) {
 		if (err) return console.log(err);
