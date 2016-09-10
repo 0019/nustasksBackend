@@ -2,9 +2,16 @@ var exports;
 var User = require('./user');
 var async = require('async');
 
+var neo4j = require('neo4j-driver').v1;
+var driver = neo4j.driver("bolt://localhost", neo4j.auth.basic("neo4j", "neo4j"));
+
 exports.refresh = function(req, res, next) {
 	var userid = req.userid;
 	var db = req.db;
+	var session = driver.session();
+	session.run( "CREATE (a:Person {name:'Arthur', title:'King'})" );
+
+	/*
 	db.collection('users').find({'UserID': userid}, {'syncrolls': 1}).limit(1).toArray(function(err, result) {
 		if (err) return console.log(err);
 		if (result.length != 0) { // not new user
@@ -28,6 +35,7 @@ exports.refresh = function(req, res, next) {
 			next();
 		}
 	});
+	*/
 };
 
 exports.addTask = function(req, res) {
