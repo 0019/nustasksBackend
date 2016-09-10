@@ -1,25 +1,24 @@
 var exports;
-var User = require('./user');
 var async = require('async');
 
 var neo4j = require('neo4j-driver').v1;
 var driver = neo4j.driver("bolt://0.0.0.0:8888", neo4j.auth.basic("neo4j", "1"));
 
+var User = require('./user');
+var IVLE = require('./ivle');
+
 exports.refresh = function(req, res, next) {
 	var userid = req.userid;
-	var db = req.db;
 	var session = driver.session();
 	session
 		//.run( "MATCH (a:Student {userID:{id}} return a.name,a.userID)",{id:userid})
-		.run( "MATCH (a:Module) return a.code, a.id")
+		.run( "MATCH (a:Student {userID:{id}}) return a.name", {id: userid})
 		.then(function(result) {
 			if (result.length == 1) {
-				
-			} else if (result.length == 0)
-				next();
+				console.log("Success: Found one student");
+				res.send();
 			} else {
-				console.log("Number of students with the same id: " + result.length);
-				// error handling
+				next(); // -> IVLE Sync -> Tasks refresh again
 			}
 		});
 		/*

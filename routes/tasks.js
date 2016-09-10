@@ -10,7 +10,7 @@ var User = require('../modules/user');
 /* Tasks page. */
 
 /* Refresh the task list */
-tasks.get('/', User.requireUserID, Tasks.refresh, IVLE.syncIVLE, Tasks.refresh);
+tasks.get('/', User.requireUserID, Tasks.refresh, User.createNewUser, IVLE.syncModules, Tasks.refresh);
 
 /* Add Task */
 tasks.get('/addTask', User.requireUserID, Tasks.addTask);

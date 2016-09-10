@@ -1,11 +1,42 @@
 var neo4j = require('neo4j-driver').v1;
 var exports;
+var async = require('async');
 var request = require('request');
 var apiKey = 'rSe7yZUlJVbjo95tnZs4i';
 
 var driver = neo4j.driver("bolt://localhost:8888", neo4j.auth.basic("neo4j", "1"));
-var session = driver.session();
 
+exports.syncModules = function(req, res, next) {
+	var userid = req.userid;
+	var token = req.query.token;
+	var modules_Student = 'https://ivle.nus.edu.sg/api/Lapi.svc/Modules_Student?APIKey=' + apiKey + '&AuthToken=' + token + '&Duration=0&IncludeAllInfo=false&output=json';
+	
+	var calls = [];
+	var modules = [];
+	request(modules_Student, function(error, response, body) {
+		var modulesData = JSON.parse(body);
+		modulesData['Results'].forEach(function(module) {
+			//console.log("Module " + module + " added.");
+			var mod = module['CourseCode'];
+			var sem = module['CourseSemester'];
+			sem = sem.charAt(sem.length - 1);
+			var year = module['CourseAcadYear'];
+			calls.push(function() {
+				var session = driver.session();
+				console.log("Module " + mod + " added.");
+				session.run('CREATE (m:Module {CourseCode: {code}})', {code: mod});
+				session.run('MATCH (s:Student {userID: {id}}) ' +
+							'MATCH (m:Module {CourseCode: {code}}) ' +
+							'CREATE (s)-[:learnt {time: {ay}}]->(m)', {id: userid, code: mod, ay: year+'_'+sem});
+			});
+		
+		});
+		async.parallel(calls);
+		next();
+	});
+};
+
+/*
 exports.syncIVLE = function(req, res, next) {
 	var token = req.query.token;
 	var userid = req.userid;
@@ -54,5 +85,5 @@ exports.syncIVLE = function(req, res, next) {
 		});
 	});
 };
-
+*/
 module.exports = exports;
