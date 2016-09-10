@@ -10,57 +10,32 @@ var IVLE = require('./ivle');
 exports.refresh = function(req, res, next) {
 	var userid = req.userid;
 	var session = driver.session();
-	session
-		//.run( "MATCH (a:Student {userID:{id}} return a.name,a.userID)",{id:userid})
-		.run( "MATCH (a:Student {userID:{id}}) return a.name", {id: userid})
-		.then(function(result) {
-			if (result.length == 1) {
-				console.log("Success: Found one student");
-				res.send();
-			} else {
-				next(); // -> IVLE Sync -> Tasks refresh again
-			}
-		});
-		/*
-    	.then(function (result) {
-		    var records = [];
-			    for (i = 0; i < result.records.length; i++) {
-					      records.push(result.records[i]);
-						      }
-							      return records;
-								    })
-	  	.then(function (records) {
-			if (records.length == 0)
-				session.run('CREATE (a.Module {code:"uiui"})');
-			else 
-				session.run('CREATE (a.Module {code:"else"})');
-	});
-		*/
-	/*
-	db.collection('users').find({'UserID': userid}, {'syncrolls': 1}).limit(1).toArray(function(err, result) {
-		if (err) return console.log(err);
-		if (result.length != 0) { // not new user
-			var tasksByRolls = [];
-			var calls = [];
-			result[0].syncrolls.forEach(function(roll) {
-				calls.push(function(callback) {
-					console.log(roll);
-					var color = roll[1];
-					db.collection('tasks').find({'Syncroll': roll[0]}, {'Title': 1, 'Duedate': 1, 'Duetime': 1, 'Syncroll': 1}).toArray(function(err, result) {
-						if (result.length > 0) tasksByRolls.push([result, color]);
-						console.log(roll + ' pushed');
-						callback(null, roll);
-					});
+	var numOfUserFound = 0;
+	async.series([
+		function(callback) {
+			session
+				.run( "MATCH (a:Student {userID:{id}}) return a.name", {id: userid})
+				.subscribe({
+					onNext: function(record) {
+						numOfUserFound++;
+					},
+					onCompleted: function() {
+						session.close();
+						if (numOfUserFound == 0) next();
+						else callback();
+					},
+					onError: function(error) {
+						console.log(error);
+					}
 				});
-			});
-			async.parallel(calls, function(err, result) {
-				res.send(tasksByRolls);
-			});
-		} else {
-			next();
+			console.log('done');
 		}
-	});
-	*/
+	], function() {
+			// search for tasks and return
+			console.log('end');
+			res.send();
+		}
+	);
 };
 
 exports.addTask = function(req, res) {
@@ -73,6 +48,9 @@ exports.addTask = function(req, res) {
 	console.log('Roll: ' + roll);
 	console.log('Contents: ' + contents);
 	console.log('Due: ' + duedate + ' ' + duetime);
+	
+	//var session = driver.session();
+	//session.run('CREATE (t:Task {title:{title}, course:{course}, due:{due}, details:{details}}', {title: title, course: roll, due:});
 	
 	var entry = {'Title': title, 'Contents': contents, 'Duedate': duedate, 'Duetime': duetime, 'Syncroll': roll, 'CreatedBy': req.userid};
 	req.db.collection('tasks').save(entry, function(err, result) {
