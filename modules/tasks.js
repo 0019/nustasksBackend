@@ -20,20 +20,35 @@ exports.refresh = function(req, res, next) {
 						numOfUserFound++;
 					},
 					onCompleted: function() {
-						session.close();
-						if (numOfUserFound == 0) next();
-						else callback();
+						if (numOfUserFound == 0) {
+							session.close();
+							next();
+						} else callback();
 					},
 					onError: function(error) {
 						console.log(error);
 					}
 				});
-			console.log('done');
 		}
 	], function() {
 			// search for tasks and return
-			console.log('end');
-			res.send();
+			var tasks = [];
+			session
+				.run( "MATCH (a:Student {userID:{id}})-[]->(m:Module)-[]->(di:ModuleInfo)-[]->(t:Task) return t.code as code,t.taskTitle as title, t.deadline as ddl",{id: userid} )
+				.subscribe({
+					onNext: function(record) {
+						var task = {"title": record.get("title"), "code": record.get("code"), "deadline": record.get("ddl")};
+						tasks.push(task);
+					},
+					onCompleted: function() {
+						session.close();
+						res.send(tasks);
+					},
+					onError: function(error) {
+						console.log(error);
+						//res.send();
+					}
+				});
 		}
 	);
 };

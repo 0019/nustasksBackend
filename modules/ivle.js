@@ -16,20 +16,37 @@ exports.syncModules = function(req, res, next) {
 	request(modules_Student, function(error, response, body) {
 		var modulesData = JSON.parse(body);
 		modulesData['Results'].forEach(function(module) {
-			//console.log("Module " + module + " added.");
 			var mod = module['CourseCode'];
 			var sem = module['CourseSemester'];
 			sem = sem.charAt(sem.length - 1);
 			var year = module['CourseAcadYear'];
+
+			var lecturer;
+			if (module['Creator'] == null) lecturer = 'N/A';
+			else lecturer = module['Creator']['Name'];
+			
 			calls.push(function() {
 				var session = driver.session();
 				console.log("Module " + mod + " added.");
-				session.run('CREATE (m:Module {CourseCode: {code}})', {code: mod});
-				session.run('MATCH (s:Student {userID: {id}}) ' +
-							'MATCH (m:Module {CourseCode: {code}}) ' +
-							'CREATE (s)-[:learnt {time: {ay}}]->(m)', {id: userid, code: mod, ay: year+'_'+sem});
+				async.series([
+					function(callback) {
+						session.run('MERGE (m:Module {CourseCode: {code}}) ' +
+									'MERGE (mi:ModuleInfo {CourseCode: {code}, Creator: {creator}, CourseName: {name}, AY: {ay}}) ' +
+									'MERGE (m)-[:at {time:{ay}}]->(mi)' , {code: mod, creator: lecturer, name: module['CourseName'], ay: year+'_'+sem});
+						//console.log("Module info created");
+						callback();
+					},
+					function(callback) {
+						session.run('MATCH (s:Student {userID: {id}}) ' +
+									'MATCH (m:Module {CourseCode: {code}}) ' +
+									'CREATE (s)-[:learnt {time: {ay}}]->(m)', {id: userid, code: mod, ay: year+'_'+sem});
+						//console.log("Module link to student created");
+						callback();
+					},
+				], function(err, results) {
+					console.log("ModuleInfo Error ? : " + err);
+				});
 			});
-		
 		});
 		async.parallel(calls);
 		next();
