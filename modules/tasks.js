@@ -34,7 +34,7 @@ exports.refresh = function(req, res, next) {
 			// search for tasks and return
 			var tasks = [];
 			session
-				.run( "MATCH (a:Student {userID:{id}})-[]->(m:Module)-[]->(di:ModuleInfo)-[]->(t:Task) return t.code as code,t.taskTitle as title, t.deadline as ddl",{id: userid} )
+				.run( "MATCH (a:Student {userID:{id}})-[]->(m:Module)-[]->(di:ModuleInfo)-[]->(t:Task) return t.CourseCode as code, t.Title as title, t.Deadline as ddl",{id: userid} )
 				.subscribe({
 					onNext: function(record) {
 						var task = {"title": record.get("title"), "code": record.get("code"), "deadline": record.get("ddl")};
@@ -45,8 +45,9 @@ exports.refresh = function(req, res, next) {
 						res.send(tasks);
 					},
 					onError: function(error) {
-						console.log(error);
-						//res.send();
+						console.log("Retrieving tasks error: " + error);
+						session.close();
+						res.send();
 					}
 				});
 		}
@@ -57,20 +58,51 @@ exports.addTask = function(req, res) {
 	var contents = decodeURI(req.query.contents);
 	var roll = decodeURI(req.query.roll);
 	var title = decodeURI(req.query.title);
-	var duedate = decodeURI(req.query.duedate);
 	var duetime = decodeURI(req.query.duetime);
 	console.log('Title: ' + title);
 	console.log('Roll: ' + roll);
 	console.log('Contents: ' + contents);
-	console.log('Due: ' + duedate + ' ' + duetime);
+	console.log('Due: ' + duetime);
 	
-	//var session = driver.session();
-	//session.run('CREATE (t:Task {title:{title}, course:{course}, due:{due}, details:{details}}', {title: title, course: roll, due:});
+	var session = driver.session();
 	
-	var entry = {'Title': title, 'Contents': contents, 'Duedate': duedate, 'Duetime': duetime, 'Syncroll': roll, 'CreatedBy': req.userid};
-	req.db.collection('tasks').save(entry, function(err, result) {
-		console.log('Task ' + title + ' added.');
-		res.send(JSON.stringify('done'));
+	var numOfSameNameTasks = 0;
+	session.run('MATCH (t:Task {title:{title}, course:{course}}) return t.title', {title: title, course: roll})
+		   .subscribe({
+			   	onNext: function(record) {
+						numOfSameNameTasks++;
+					},
+			   	onCompleted: function() {
+					if (numOfSameNameTasks == 0) {
+						//async.series([
+							//function(callback) {
+								session.run('CREATE (t:Task {Title:{title}, CourseCode:{course}, Deadline:{ddl}, Details:{details}, CreatorID:{id}}) WITH t ' +
+											'MATCH (:Student {userID:{id}})-[r:learnt]->(m:Module {CourseCode:{course}}) WITH t, r.time as time, m ' +
+											'MATCH (m)-[:at{time:time}]->(mi:ModuleInfo) WITH t, mi ' +
+											'CREATE (mi)-[:has]->(t)',
+											{title: title, course: roll, ddl: duetime, id: req.userid, details:contents})
+										.then(function() {
+											console.log("Task added");
+											res.send(JSON.stringify('done'));
+										});
+								//callback();
+							//},
+							//function(callback) {
+								//session.run('CREATE (t:Task {Title:{title}, CourseCode:{course}, Deadline:{ddl}, Details:{details}, CreatorID:{id}})', 
+								//			{title: title, course: roll, ddl: duetime, id: req.userid, details:contents});
+								//callback();
+							//}
+						//], function(err, results) {
+						//});
+					} else {
+						console.log("Task duplicated");
+						res.send(JSON.stringify('duplicate'));
+						console.log(details);
+					}
+			   	},
+			   	onError: function(error) {
+			   		console.log(error);
+				}
 	});
 };
 
